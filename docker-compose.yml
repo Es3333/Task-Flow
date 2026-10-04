@@ -36,7 +36,6 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
     ports:
       - "4000:4000"
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/server.js"
 
   web:
     build:
