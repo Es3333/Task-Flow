@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: TaskFlow API
+  version: 1.0.0
+  description: Project management API with JWT auth, RBAC, projects and tasks.
+servers:
+  - url: http://localhost:4000/api
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200': { description: OK }
+  /auth/register:
+    post:
+      summary: Register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        '201': { description: Created }
+        '409': { description: Conflict }
+  /auth/login:
+    post:
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+  /auth/refresh:
+    post:
+      summary: Refresh tokens
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: OK }
+  /auth/logout:
+    post:
+      summary: Logout
+      security: []
+      responses:
+        '200': { description: OK }
+  /auth/me:
+    get:
+      summary: Current user
+      responses:
+        '200': { description: OK }
+  /projects:
+    get:
+      summary: List projects (paginated, RBAC filtered)
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: search, in: query, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '201': { description: Created }
+  /projects/{id}:
+    get:
+      summary: Get project
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Update project (owner/admin)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete project
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+  /projects/{id}/members:
+    post:
+      summary: Add member (owner/admin)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+  /projects/{id}/members/{userId}:
+    delete:
+      summary: Remove member
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: userId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+  /projects/{projectId}/tasks:
+    get:
+      summary: List tasks (paginated, filter/sort)
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [TODO, IN_PROGRESS, DONE] } }
+        - { name: priority, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create task
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string } }
+      responses:
+        '201': { description: Created }
+  /tasks/{id}:
+    get:
+      summary: Get task
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Update task (incl. status for kanban DnD)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete task
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+  /dashboard/summary:
+    get:
+      summary: Task counts by status + overdue
+      responses:
+        '200': { description: OK }
+  /users:
+    get:
+      summary: List users (ADMIN only)
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
