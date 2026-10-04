@@ -17,7 +17,10 @@ export function verifyAccess(token: string): AccessPayload {
 }
 
 export function signRefresh(userId: string): string {
-  return jwt.sign({ sub: userId, type: 'refresh' }, env.jwtRefreshSecret, {
+  // jti guarantees uniqueness: without it, two tokens minted in the same
+  // second are byte-identical (JWT iat has 1s resolution) and would collide
+  // on the stored token hash.
+  return jwt.sign({ sub: userId, type: 'refresh', jti: crypto.randomUUID() }, env.jwtRefreshSecret, {
     expiresIn: env.jwtRefreshExpiresIn,
   } as jwt.SignOptions);
 }
